@@ -13,9 +13,11 @@ O-No replaces a messy Excel sheet with a real full-stack app for tracking coding
 - JWT-based authentication with per-user data isolation
 - Full CRUD for questions — source link, difficulty, topic, notes
 - Filtering and pagination across the question list
-- Progress tracking and revision scheduling
+- Progress tracking with confidence levels and revision counts
 - Favorites and per-question notes
 - Dashboard analytics (question counts, difficulty breakdown, favorites, revision due)
+- Scheduled revision checks using Spring @Scheduled
+- Stateless authentication with BCrypt password hashing
 
 ## Tech Stack
 
@@ -23,7 +25,10 @@ O-No replaces a messy Excel sheet with a real full-stack app for tracking coding
 - **Backend:** Spring Boot, Spring Security, Spring Data JPA / Hibernate
 - **Database:** MySQL
 - **Auth:** JWT (stateless), BCrypt password hashing
-- **Infra:** Docker, Maven
+- **Testing:** JUnit 5, Mockito
+- **Performance Testing:** k6
+- **Infra:** Docker, Docker Compose, Maven
+- **Deployment:** Render, Aiven
 
 ## Architecture
 
@@ -62,10 +67,46 @@ MySQL       → Aiven
 | Module | Example endpoints |
 |---|---|
 | Auth | `POST /api/users/register`, `POST /api/users/login` |
-| Questions | `GET / POST / PUT / DELETE /api/questions` |
+| Questions | `GET /api/questions, POST /api/questions, PUT /api/questions/{id}, DELETE /api/questions{id}` |
 | Progress | `GET /api/progress/{questionId}`, `PATCH /api/progress/{questionId}/favorite`, `PATCH /api/progress/{questionId}/confidence`, `PATCH /api/progress/{questionId}/revise` |
-| Notes | `GET / POST / PUT / DELETE /api/notes` |
+| Notes | `GET /api/notes/{questionId},POST /api/notes, PUT /api/notes/{id}, DELETE /api/notes/{id}` |
 | Dashboard | `GET /api/dashboard/summary` |
+
+## Scheduled Revision Automation
+
+O-No uses Spring's @Scheduled support to periodically check for questions whose revision date is due.
+
+The scheduler:
+
+- Checks progress records against their nextRevision date
+
+- Identifies questions due for revision
+
+- Runs automatically without requiring a user request
+
+- Uses the same persistence layer as the REST API
+
+This demonstrates scheduled background processing alongside the application's request-driven REST architecture.
+
+## Testing
+
+Service-layer tests are implemented using JUnit 5 and Mockito.
+
+The test suite covers key application behavior including:
+
+- Retrieving questions for the authenticated user
+
+- Handling missing questions
+
+- Paginated question retrieval
+
+- Adding questions and creating associated progress
+
+- Rejecting duplicate questions
+
+- Updating questions
+
+- Deleting questions
 
 ## Performance
 
